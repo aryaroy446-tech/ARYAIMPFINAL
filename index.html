@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedicineGuard AI — Counterfeit Drug Detector</title>
+    <meta name="description" content="AI instantly analyzes packaging quality, brand authenticity, and safety markers to give you a counterfeit risk score.">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">
+            <i class="fa-solid fa-shield-halved"></i> MedicineGuard<span>AI</span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="active">Home</a>
+            <a href="/scanner.html">Scan Medicine</a>
+            <a href="/history.html">History</a>
+            <a href="/database.html">Database</a>
+            <a href="/help.html">Help</a>
+        </div>
+        <div>
+            <a href="/scanner.html" class="btn btn-primary">Start Scanning</a>
+            <button onclick="generatePDFReport()" class="btn btn-secondary" style="border-color: #3b82f6; color: #3b82f6; margin-left: 0.5rem; padding: 0.6rem 1rem;"><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+            <button onclick="logout()" class="btn btn-secondary" style="border-color: #ef4444; color: #ef4444; margin-left: 0.5rem; padding: 0.6rem 1rem;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <h1>Detect Counterfeit Medicines with AI</h1>
+            <p>Upload a photo of any medicine packaging. Our multimodal AI instantly analyzes packaging quality, brand authenticity, and safety markers to give you a counterfeit risk score.</p>
+            <div class="hero-actions">
+                <a href="/scanner.html" class="btn btn-primary"><i class="fa-solid fa-camera"></i> Scan a Medicine Now</a>
+                <a href="/history.html" class="btn btn-secondary"><i class="fa-solid fa-clock-rotate-left"></i> View History</a>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+                <h3>Computer Vision AI</h3>
+                <p>Neural networks analyze packaging quality, fonts, colors, and structural integrity in milliseconds.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <h3>Multi-Dimensional Check</h3>
+                <p>Independent analysis layers — packaging, brand authenticity, and safety markers — fused into one score.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-shield-virus"></i></div>
+                <h3>100% Secure</h3>
+                <p>Scans are encrypted and seamlessly processed through our custom high-performance backend server.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

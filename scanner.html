@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Medicine — MedicineGuard AI</title>
+    <meta name="description" content="Upload a photo of your medicine to analyze and detect counterfeits using our AI scanner.">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">
+            <i class="fa-solid fa-shield-halved"></i> MedicineGuard<span>AI</span>
+        </a>
+        <div class="nav-links" style="display: flex; align-items: center;">
+            <a href="/">Home</a>
+            <a href="/scanner.html" class="active">Scan Medicine</a>
+            <a href="/history.html">History</a>
+            <a href="/database.html">Database</a>
+            <a href="/help.html">Help</a>
+            <button onclick="generatePDFReport()" class="btn btn-secondary" style="border-color: #3b82f6; color: #3b82f6; margin-left: 1.5rem; padding: 0.5rem 1rem;"><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+            <button onclick="logout()" class="btn btn-secondary" style="border-color: #ef4444; color: #ef4444; margin-left: 0.5rem; padding: 0.5rem 1rem;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1 style="margin-bottom: 2rem; text-align: center;">Verify Medicine Authenticity</h1>
+        
+        <div class="scanner-layout">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <form id="uploadForm">
+                    <div class="upload-zone" id="dropZone">
+                        <input type="file" id="fileInput" name="medicineImage" accept="image/*" required>
+                        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                        <h3>Drag & drop medicine photo here</h3>
+                        <p>JPEG, PNG up to 10MB</p>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                            Select Image
+                        </button>
+                        
+                        <div class="image-preview-container" id="imagePreviewContainer">
+                            <img src="" id="imagePreview" alt="Preview">
+                            <button type="button" class="change-img-btn" onclick="clearImage(event)">
+                                <i class="fa-solid fa-xmark"></i> Change
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="scanBtn" style="width: 100%; margin-top: 1.5rem; justify-content: center; display: none;">
+                        <i class="fa-solid fa-expand"></i> Run AI Analysis
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-panel">
+                <div class="results-placeholder" id="resultsPlaceholder">
+                    <i class="fa-solid fa-microscope" style="opacity: 0.5;"></i>
+                    <h3>Awaiting Analysis</h3>
+                    <p>Upload a photo and click scan to see AI findings.</p>
+                </div>
+
+                <div class="loader-container" id="loader">
+                    <div class="spinner"></div>
+                    <p style="color: var(--primary); font-weight: 500;">AI evaluating packaging...</p>
+                </div>
+
+                <div class="scan-results" id="scanResults">
+                    <div class="score-circle" id="scoreCircle">
+                        <div class="score-value" id="scoreValue">92%</div>
+                        <div class="score-label">Authenticity</div>
+                    </div>
+                    
+                    <h3 style="text-align: center; margin-bottom: 2rem;">
+                        Risk Level: <span id="riskLevel" class="badge">Low</span>
+                    </h3>
+
+                    <div class="detail-item">
+                        <h4>Packaging Quality</h4>
+                        <p id="detailPackaging">Processing...</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Brand Authenticity</h4>
+                        <p id="detailBrand">Processing...</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Safety Markers</h4>
+                        <p id="detailSafety">Processing...</p>
+                    </div>
+                    
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem; text-align: center; color: var(--text-main);">Medicine Information</h3>
+                    <div class="detail-item" style="border-left-color: var(--secondary); background: rgba(59, 130, 246, 0.1);">
+                        <h4>Company Name</h4>
+                        <p id="infoCompany">Processing...</p>
+                    </div>
+                    <div class="detail-item" style="border-left-color: var(--secondary); background: rgba(59, 130, 246, 0.1);">
+                        <h4>Primary Usage</h4>
+                        <p id="infoUsage">Processing...</p>
+                    </div>
+                    <div class="detail-item" style="border-left-color: var(--secondary); background: rgba(59, 130, 246, 0.1);">
+                        <h4>Storage Instructions</h4>
+                        <p id="infoStorage">Processing...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

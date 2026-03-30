@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication — MedicineGuard AI</title>
+    <meta name="description" content="Login or Sign up for MedicineGuard AI.">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, var(--bg-main) 0%, #0f172a 100%);
+        }
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 3rem;
+            backdrop-filter: var(--glass-blur);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.6s ease-out;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            font-size: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 1rem;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #000000;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 1rem;
+            top: 2.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .toggle-password:hover {
+            color: var(--text-main);
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+        .toggle-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .toggle-link a {
+            color: var(--primary);
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .toggle-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <!-- Logo -->
+        <h1 style="text-align: center; margin-bottom: 0.5rem;" class="logo">
+            <i class="fa-solid fa-shield-halved"></i> MedicineGuard<span>AI</span>
+        </h1>
+        
+        <!-- Login Form -->
+        <div id="loginSection">
+            <h2>Welcome Back</h2>
+            <form id="loginForm" onsubmit="handleAuth(event, 'login')">
+                <div class="form-group">
+                    <label for="loginId">Username or Mobile Number</label>
+                    <input type="text" id="loginId" class="form-control" placeholder="Enter username or mobile" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+                    <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('loginPassword', this)"></i>
+                </div>
+                <button type="submit" class="btn btn-primary auth-btn">Log In</button>
+                <div class="toggle-link">
+                    New user? <a onclick="toggleAuthForms()">Create an account</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupSection" style="display: none;">
+            <h2>Create Account</h2>
+            <form id="signupForm" onsubmit="handleAuth(event, 'signup')">
+                <div class="form-group">
+                    <label for="signupId">Username or Mobile Number</label>
+                    <input type="text" id="signupId" class="form-control" placeholder="Choose username or mobile" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" class="form-control" placeholder="Create a strong password" required autocomplete="new-password">
+                    <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('signupPassword', this)"></i>
+                </div>
+                <button type="submit" class="btn btn-primary auth-btn">Sign Up</button>
+                <div class="toggle-link">
+                    Already have an account? <a onclick="toggleAuthForms()">Log in</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Redirect to home if already logged in
+        if (localStorage.getItem('medicineGuardSession')) {
+            window.location.href = '/';
+        }
+
+        function toggleAuthForms() {
+            const login = document.getElementById('loginSection');
+            const signup = document.getElementById('signupSection');
+            if (login.style.display === 'none') {
+                login.style.display = 'block';
+                signup.style.display = 'none';
+            } else {
+                login.style.display = 'none';
+                signup.style.display = 'block';
+            }
+        }
+
+        function togglePasswordVisibility(inputId, iconElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconElement.classList.remove('fa-eye');
+                iconElement.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                iconElement.classList.remove('fa-eye-slash');
+                iconElement.classList.add('fa-eye');
+            }
+        }
+
+        async function handleAuth(e, action) {
+            e.preventDefault();
+            const identifier = document.getElementById(action + 'Id').value.trim();
+            const password = document.getElementById(action + 'Password').value;
+
+            try {
+                const response = await fetch(`http://localhost:5001/api/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Set token and redirect
+                    localStorage.setItem('medicineGuardSession', data.token);
+                    window.location.href = '/';
+                } else {
+                    alert(data.error || 'Authentication failed. Please try again.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection to the server failed. Make sure the backend is running.');
+            }
+        }
+    </script>
+</body>
+</html>

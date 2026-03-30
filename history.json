@@ -1,0 +1,97 @@
+[
+    {
+        "id": "1774886494641",
+        "date": "2026-03-30T16:01:34.000Z",
+        "filename": "paracetamol-tablets-500-mg-15x10x15-tablets-222.jpg",
+        "result": {
+            "score": 98,
+            "riskLevel": "Low",
+            "details": {
+                "packagingQuality": "High-quality printing with clear, legible text and consistent colors. The carton box and blister pack appear professionally manufactured with no signs of defects or poor finish.",
+                "brandAuthenticity": "The product clearly displays 'Calpol 500' as the brand, manufactured by 'GlaxoSmithKline Pharmaceuticals Limited (GSK)', a well-known pharmaceutical company. Both the GSK logo and Pegasus brand symbol are present, along with explicit text indicating ownership by the GSK group of companies.",
+                "safetyMarkers": "Clear identification of the active ingredient (Paracetamol Tablets IP 500 mg), dosage, and quantity. Comprehensive manufacturer details and a manufacturing license number are provided. The blister pack is intact, suggesting product integrity."
+            },
+            "medicineInfo": {
+                "companyName": "GlaxoSmithKline Pharmaceuticals Limited",
+                "usage": "Pain relief and fever reduction (Paracetamol)",
+                "storageInstructions": "Unknown"
+            }
+        }
+    },
+    {
+        "id": "1774886228899",
+        "date": "2026-03-30T15:57:08.000Z",
+        "filename": "paracetamol-tablets-500-mg-15x10x15-tablets-222.jpg",
+        "result": {
+            "score": 50,
+            "riskLevel": "Medium",
+            "details": {
+                "packagingQuality": "Unable to verify. AI Error.",
+                "brandAuthenticity": "Unable to verify. AI Error.",
+                "safetyMarkers": "Unable to verify. AI Error."
+            },
+            "medicineInfo": {
+                "companyName": "Unknown",
+                "usage": "Unknown",
+                "storageInstructions": "Unknown"
+            }
+        }
+    },
+    {
+        "id": "1774886057212",
+        "date": "2026-03-30T15:54:17.000Z",
+        "filename": "paracetamol-tablets-500-mg-15x10x15-tablets-222.jpg",
+        "result": {
+            "score": 50,
+            "riskLevel": "Medium",
+            "details": {
+                "packagingQuality": "Unable to verify. AI Error.",
+                "brandAuthenticity": "Unable to verify. AI Error.",
+                "safetyMarkers": "Unable to verify. AI Error."
+            },
+            "medicineInfo": {
+                "companyName": "Unknown",
+                "usage": "Unknown",
+                "storageInstructions": "Unknown"
+            }
+        }
+    },
+    {
+        "id": "1774886047194",
+        "date": "2026-03-30T15:54:07.000Z",
+        "filename": "paracetamol-tablets-500-mg-15x10x15-tablets-222.jpg",
+        "result": {
+            "score": 50,
+            "riskLevel": "Medium",
+            "details": {
+                "packagingQuality": "Unable to verify. AI Error.",
+                "brandAuthenticity": "Unable to verify. AI Error.",
+                "safetyMarkers": "Unable to verify. AI Error."
+            },
+            "medicineInfo": {
+                "companyName": "Unknown",
+                "usage": "Unknown",
+                "storageInstructions": "Unknown"
+            }
+        }
+    },
+    {
+        "id": "1774885915625",
+        "date": "2026-03-30T15:51:55.000Z",
+        "filename": "paracetamol-tablets-500-mg-15x10x15-tablets-222.jpg",
+        "result": {
+            "score": 50,
+            "riskLevel": "Medium",
+            "details": {
+                "packagingQuality": "Unable to verify. AI Error.",
+                "brandAuthenticity": "Unable to verify. AI Error.",
+                "safetyMarkers": "Unable to verify. AI Error."
+            },
+            "medicineInfo": {
+                "companyName": "Unknown",
+                "usage": "Unknown",
+                "storageInstructions": "Unknown"
+            }
+        }
+    }
+]

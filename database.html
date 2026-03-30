@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Database — MedicineGuard AI</title>
+    <meta name="description" content="Search our AI database for comprehensive medicine details.">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 3rem;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            padding-right: 4rem;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-main);
+            font-size: 1.1rem;
+            outline: none;
+            backdrop-filter: var(--glass-blur);
+            transition: border-color 0.3s ease;
+        }
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+        .search-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+        .search-btn:hover {
+            opacity: 0.8;
+        }
+        .db-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">
+            <i class="fa-solid fa-shield-halved"></i> MedicineGuard<span>AI</span>
+        </a>
+        <div class="nav-links" style="display: flex; align-items: center;">
+            <a href="/">Home</a>
+            <a href="/scanner.html">Scan Medicine</a>
+            <a href="/history.html">History</a>
+            <a href="/database.html" class="active">Database</a>
+            <a href="/help.html">Help</a>
+            <button onclick="generatePDFReport()" class="btn btn-secondary" style="border-color: #3b82f6; color: #3b82f6; margin-left: 1.5rem; padding: 0.5rem 1rem;"><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+            <button onclick="logout()" class="btn btn-secondary" style="border-color: #ef4444; color: #ef4444; margin-left: 0.5rem; padding: 0.5rem 1rem;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1 style="text-align: center; margin-bottom: 1rem;">Medicine Database</h1>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Search for any medicine to instantly retrieve its uses, ingredients, and storage details.</p>
+
+        <div class="search-container">
+            <form id="dbSearchForm" onsubmit="searchMedicine(event)">
+                <input type="text" id="searchInput" class="search-input" placeholder="e.g. Paracetamol, Amoxicillin..." required autocomplete="off">
+                <button type="submit" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+
+        <div id="dbLoader" class="loader-container" style="display: none; padding: 3rem;">
+            <div class="spinner"></div>
+            <p style="color: var(--primary);">Querying AI Database...</p>
+        </div>
+
+        <div id="dbStateEmpty" style="text-align: center; padding: 4rem; color: var(--text-muted);">
+            <i class="fa-solid fa-book-medical" style="font-size: 4rem; opacity: 0.2; margin-bottom: 1rem;"></i>
+            <h3>Enter a medicine name to see its details.</h3>
+        </div>
+
+        <div id="dbResults" style="display: none; animation: fadeIn 0.5s ease-out; background: var(--surface); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border);">
+            <h2 id="dbTitle" style="color: var(--primary); margin-bottom: 1.5rem; text-align: center; font-size: 2rem;"></h2>
+            
+            <div class="db-grid">
+                <div class="detail-item" style="border-left-color: var(--secondary);">
+                    <h4>Company / Manufacturer</h4>
+                    <p id="dbCompany" style="color: var(--text-main);"></p>
+                </div>
+                <div class="detail-item" style="border-left-color: var(--secondary);">
+                    <h4>Primary Uses</h4>
+                    <p id="dbUses" style="color: var(--text-main);"></p>
+                </div>
+                <div class="detail-item" style="border-left-color: var(--secondary);">
+                    <h4>Active Ingredients</h4>
+                    <p id="dbIngredients" style="color: var(--text-main);"></p>
+                </div>
+                <div class="detail-item" style="border-left-color: var(--secondary);">
+                    <h4>Side Effects</h4>
+                    <p id="dbSideEffects" style="color: var(--text-main);"></p>
+                </div>
+                <div class="detail-item" style="border-left-color: var(--secondary);">
+                    <h4>Storage Instructions</h4>
+                    <p id="dbStorage" style="color: var(--text-main);"></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

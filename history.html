@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan History — MedicineGuard AI</title>
+    <meta name="description" content="View your past AI medicine scans and authenticity results.">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">
+            <i class="fa-solid fa-shield-halved"></i> MedicineGuard<span>AI</span>
+        </a>
+        <div class="nav-links" style="display: flex; align-items: center;">
+            <a href="/">Home</a>
+            <a href="/scanner.html">Scan Medicine</a>
+            <a href="/history.html" class="active">History</a>
+            <a href="/database.html">Database</a>
+            <a href="/help.html">Help</a>
+            <button onclick="generatePDFReport()" class="btn btn-secondary" style="border-color: #3b82f6; color: #3b82f6; margin-left: 1.5rem; padding: 0.5rem 1rem;"><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+            <button onclick="logout()" class="btn btn-secondary" style="border-color: #ef4444; color: #ef4444; margin-left: 0.5rem; padding: 0.5rem 1rem;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Scan History</h1>
+            <div>
+                <button onclick="clearAllHistory()" class="btn btn-secondary" style="border-color: #ef4444; color: #ef4444; margin-right: 1rem;">
+                    <i class="fa-solid fa-trash-can"></i> Clear All
+                </button>
+                <a href="/scanner.html" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Scan</a>
+            </div>
+        </div>
+
+        <div id="historyLoader" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+            <div class="spinner" style="margin: 0 auto 1rem;"></div>
+            <p>Loading your past scans from our secure backend...</p>
+        </div>
+
+        <div id="noHistory" style="display: none; text-align: center; padding: 4rem; background: var(--surface); border-radius: var(--radius);">
+            <i class="fa-solid fa-clock-rotate-left" style="font-size: 3rem; color: var(--border); margin-bottom: 1rem;"></i>
+            <h3>No Scans Found</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You haven't scanned any medicines yet.</p>
+            <a href="/scanner.html" class="btn btn-secondary">Run your first scan</a>
+        </div>
+
+        <div class="history-grid" id="historyGrid" style="display: none;">
+            <!-- Rendered via JS -->
+        </div>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

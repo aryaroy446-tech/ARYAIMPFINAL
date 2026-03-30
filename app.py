@@ -1,263 +1,474 @@
-import os
-import time
-import random
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-from werkzeug.utils import secure_filename
-import json
-import time
-import google.generativeai as genai
-from PIL import Image
-from dotenv import load_dotenv
+// Navigation Active State Handled Server-Side via HTML pages
 
-load_dotenv()
-api_key = os.environ.get("GEMINI_API_KEY")
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.5-flash')
+// === Global Variables & Setup ===
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+// IMPORTANT: Paste your Render.com / PythonAnywhere LIVE URLs here before launching to Netlify!
+const LIVE_BACKEND_URL = 'https://your-live-backend-api.onrender.com';
+const API_BASE_URL = IS_LOCAL ? 'http://localhost:5001' : LIVE_BACKEND_URL;
 
-app = Flask(__name__, static_folder='public', static_url_path='')
-CORS(app)
+// Authentication Check: Redirect unauthenticated users
+if (!window.location.pathname.endsWith('/auth.html') && !localStorage.getItem('medicineGuardSession')) {
+    window.location.href = '/auth.html';
+}
 
-# JSON Database Persistence Setup
-DATABASE_DIR = os.path.join(os.path.dirname(__file__), 'database')
-USERS_FILE = os.path.join(DATABASE_DIR, 'users.json')
-HISTORY_FILE = os.path.join(DATABASE_DIR, 'history.json')
+function logout() {
+    localStorage.removeItem('medicineGuardSession');
+    sessionStorage.removeItem('medicineGuardSessionReport');
+    window.location.href = '/auth.html';
+}
 
-if not os.path.exists(DATABASE_DIR):
-    os.makedirs(DATABASE_DIR)
+// === Scanner Page Logic ===
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const uploadForm = document.getElementById('uploadForm');
+const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+const imagePreview = document.getElementById('imagePreview');
+const scanBtn = document.getElementById('scanBtn');
 
-def load_data(file_path, default_data):
-    if not os.path.exists(file_path):
-        with open(file_path, 'w') as f:
-            json.dump(default_data, f, indent=4)
-        return default_data
-    with open(file_path, 'r') as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError:
-            return default_data
+// UI Elements for Scanner Results
+const resultsPlaceholder = document.getElementById('resultsPlaceholder');
+const loader = document.getElementById('loader');
+const scanResults = document.getElementById('scanResults');
+const scoreCircle = document.getElementById('scoreCircle');
+const scoreValue = document.getElementById('scoreValue');
+const riskLevel = document.getElementById('riskLevel');
+const detailPackaging = document.getElementById('detailPackaging');
+const detailBrand = document.getElementById('detailBrand');
+const detailSafety = document.getElementById('detailSafety');
+const infoCompany = document.getElementById('infoCompany');
+const infoUsage = document.getElementById('infoUsage');
+const infoStorage = document.getElementById('infoStorage');
 
-def save_data(file_path, data):
-    with open(file_path, 'w') as f:
-        json.dump(data, f, indent=4)
+if (dropZone && fileInput) {
+    // Drag & Drop Events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
 
-# Persistent DB loads
-history_db = load_data(HISTORY_FILE, [])
-users_db = load_data(USERS_FILE, {"admin": "admin123"})
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
 
-@app.route('/')
-def serve_index():
-    return send_from_directory('public', 'index.html')
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
 
-@app.route('/<path:path>')
-def serve_static(path):
-    if os.path.exists(os.path.join('public', path)):
-        return send_from_directory('public', path)
-    return send_from_directory('public', 'index.html')
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
 
-def perform_ai_analysis(image_stream):
-    try:
-        img = Image.open(image_stream)
-        
-        prompt = """
-        Analyze this image of a medicine packaging to determine its authenticity. Provide the result strictly as a valid JSON object matching this exact structure:
-        {
-          "score": <number from 0 to 100 representing authenticity score>,
-          "riskLevel": "<either 'Low', 'Medium', or 'High'>",
-          "details": {
-            "packagingQuality": "<concise observation>",
-            "brandAuthenticity": "<concise observation>",
-            "safetyMarkers": "<concise observation>"
-          },
-          "medicineInfo": {
-            "companyName": "<extracted company/manufacturer name or 'Unknown'>",
-            "usage": "<primary medical use or indication or 'Unknown'>",
-            "storageInstructions": "<how to store it or 'Unknown'>"
-          }
-        }
-        Do not include markdown formatting or any other text outside the JSON.
-        """
-        
-        response = model.generate_content([prompt, img])
-        result_text = response.text.strip()
-        
-        # Remove potential markdown block wrappers
-        if result_text.startswith("```json"):
-            result_text = result_text[7:]
-        if result_text.startswith("```"):
-            result_text = result_text[3:]
-        if result_text.endswith("```"):
-            result_text = result_text[:-3]
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+        if (files.length > 0) {
+            const file = files[0];
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file.');
+                return;
+            }
+
+            // Preview Image
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+                imagePreview.src = reader.result;
+                imagePreviewContainer.style.display = 'block';
+                scanBtn.style.display = 'flex';
+                
+                // Hide results if showing
+                resetResultsView();
+            };
             
-        return json.loads(result_text.strip())
-    except Exception as e:
-        print(f"Gemini API Error: {e}")
-        # Fallback response on error
-        return {
-            "score": 50,
-            "riskLevel": "Medium",
-            "details": {
-                "packagingQuality": "Unable to verify. AI Error.",
-                "brandAuthenticity": "Unable to verify. AI Error.",
-                "safetyMarkers": "Unable to verify. AI Error.",
-            },
-            "medicineInfo": {
-                "companyName": "Unknown",
-                "usage": "Unknown",
-                "storageInstructions": "Unknown"
+            // Re-assign to file input if coming from drag
+            if(fileInput.files !== files) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
             }
         }
-
-@app.route('/api/scan', methods=['POST'])
-def scan_medicine():
-    if 'medicineImage' not in request.files:
-        return jsonify({"error": "No image file provided."}), 400
-        
-    file = request.files['medicineImage']
-    if file.filename == '':
-        return jsonify({"error": "No selected file."}), 400
-
-    print(f"Received file: {file.filename}")
-
-    # Real AI analysis using Gemini API
-    analysis_result = perform_ai_analysis(file.stream)
-
-    # Create history record
-    record = {
-        "id": str(int(time.time() * 1000)),
-        "date": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
-        "filename": secure_filename(file.filename),
-        "result": analysis_result
     }
+
+    // Process Form Submission
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // UI State: Loading
+        resultsPlaceholder.style.display = 'none';
+        scanResults.style.display = 'none';
+        loader.style.display = 'flex';
+        scanBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('medicineImage', file);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/scan`, {
+                method: 'POST',
+                body: formData
+            });
+            const resData = await response.json();
+
+            if (resData.success) {
+                displayResults(resData.data.result);
+            } else {
+                alert(resData.error || 'Failed to scan image.');
+                resetResultsView();
+            }
+        } catch (error) {
+            console.error('Scan Error:', error);
+            alert('A server error occurred during analysis.');
+            resetResultsView();
+        } finally {
+            scanBtn.disabled = false;
+            loader.style.display = 'none';
+        }
+    });
+}
+
+function clearImage(e) {
+    e.stopPropagation();
+    fileInput.value = '';
+    imagePreview.src = '';
+    imagePreviewContainer.style.display = 'none';
+    scanBtn.style.display = 'none';
+    resetResultsView();
+}
+
+function resetResultsView() {
+    resultsPlaceholder.style.display = 'block';
+    loader.style.display = 'none';
+    scanResults.style.display = 'none';
+}
+
+function displayResults(data) {
+    // Populate Results
+    scoreValue.innerText = `${data.score}%`;
+    scoreCircle.style.setProperty('--score', data.score);
     
-    history_db.insert(0, record) # Prepend
-    save_data(HISTORY_FILE, history_db) # Commit to disk
-    return jsonify({"success": True, "data": record})
+    // Set appropriate Class
+    scoreCircle.className = `score-circle risk-${data.riskLevel}`;
+    riskLevel.className = `badge badge-${data.riskLevel}`;
+    riskLevel.innerText = data.riskLevel;
 
-@app.route('/api/history', methods=['GET'])
-def get_history():
-    return jsonify({"success": True, "data": history_db})
-
-@app.route('/api/history/<item_id>', methods=['DELETE'])
-def delete_history_item(item_id):
-    global history_db
-    history_db = [item for item in history_db if item['id'] != item_id]
-    save_data(HISTORY_FILE, history_db) # Commit to disk
-    return jsonify({"success": True})
-
-@app.route('/api/history', methods=['DELETE'])
-def delete_all_history():
-    global history_db
-    history_db = []
-    save_data(HISTORY_FILE, history_db) # Commit to disk
-    return jsonify({"success": True})
-
-@app.route('/api/database', methods=['GET'])
-def query_database():
-    medicine_name = request.args.get('q', '').strip()
-    if not medicine_name:
-        return jsonify({"error": "Search query required."}), 400
-        
-    try:
-        prompt = f"""
-        Provide detailed, factual database information about the medicine '{medicine_name}'. 
-        Return the result strictly as a valid JSON object matching this exact framework:
-        {{
-          "companyName": "<Primary manufacturer or company associated>",
-          "primaryUses": "<What it is chiefly used to treat>",
-          "activeIngredients": "<Main active chemical components>",
-          "sideEffects": "<Common side effects>",
-          "storageInstructions": "<How to store>"
-        }}
-        Do not include markdown or formatting outside the JSON block. Do not apologize or add any other text.
-        """
-        response = model.generate_content(prompt)
-        result_text = response.text.strip()
-        
-        if result_text.startswith("```json"):
-            result_text = result_text[7:]
-        if result_text.startswith("```"):
-            result_text = result_text[3:]
-        if result_text.endswith("```"):
-            result_text = result_text[:-3]
-            
-        return jsonify({"success": True, "data": json.loads(result_text.strip())})
-    except Exception as e:
-        print(f"Database API Error: {e}")
-        return jsonify({"error": "Failed to retrieve medicine data from AI Database."}), 500
-
-@app.route('/api/help', methods=['GET'])
-def analyze_symptoms():
-    symptoms = request.args.get('symptoms', '').strip()
-    if len(symptoms) < 10:
-        return jsonify({"error": "Please provide more detail about your symptoms (minimum 10 characters)."}), 400
-        
-    try:
-        prompt = f"""
-        Act as a medical triage AI. The user describes their symptoms as follows:
-        "{symptoms}"
-        
-        Evaluate the symptoms strictly according to these rules and return the result as a valid JSON object matching this structure:
-        {{
-          "riskLevel": "<Either 'High', 'Medium', or 'Low'>",
-          "advice": "<Detailed paragraph on what actions they should take based on the symptoms>",
-          "requiresDoctor": <true or false>,
-          "suggestedMedicines": ["<OTC Medicine 1>", "<OTC Medicine 2>", ...]
-        }}
-        
-        CRITICAL RULES:
-        1. If the symptoms indicate ANY potential emergency or high risk (e.g., chest pain, severe bleeding, difficulty breathing, neurological deficits, severe infection), set "riskLevel" to "High", "requiresDoctor" to true, and leave "suggestedMedicines" as an empty list []. Your advice must prioritize seeking immediate emergency care.
-        2. Only suggest general over-the-counter (OTC) medicines if "riskLevel" is "Low" or "Medium". Do not prescribe prescription medications.
-        
-        Do not include markdown or formatting outside the JSON block. Do not apologize or add any other text.
-        """
-        response = model.generate_content(prompt)
-        result_text = response.text.strip()
-        
-        if result_text.startswith("```json"):
-            result_text = result_text[7:]
-        if result_text.startswith("```"):
-            result_text = result_text[3:]
-        if result_text.endswith("```"):
-            result_text = result_text[:-3]
-            
-        return jsonify({"success": True, "data": json.loads(result_text.strip())})
-    except Exception as e:
-        print(f"Help API Error: {e}")
-        return jsonify({"error": "Failed to process symptoms symptom analysis engine is currently unavailable."}), 500
-
-@app.route('/api/signup', methods=['POST'])
-def signup():
-    data = request.json
-    username = data.get('identifier', '').strip()
-    password = data.get('password', '')
-
-    if not username or not password:
-        return jsonify({"error": "Username/Mobile and password are required."}), 400
-
-    if username in users_db:
-        return jsonify({"error": "An account with this username or mobile number already exists."}), 400
-
-    users_db[username] = password
-    save_data(USERS_FILE, users_db) # Commit user to disk permanently
-    return jsonify({"success": True, "token": f"token_{username}_{int(time.time())}"})
-
-@app.route('/api/login', methods=['POST'])
-def login():
-    data = request.json
-    username = data.get('identifier', '').strip()
-    password = data.get('password', '')
-
-    if not username or not password:
-        return jsonify({"error": "Username/Mobile and password are required."}), 400
-
-    if users_db.get(username) == password:
-         return jsonify({"success": True, "token": f"token_{username}_{int(time.time())}"})
+    detailPackaging.innerText = data.details.packagingQuality;
+    detailBrand.innerText = data.details.brandAuthenticity;
+    detailSafety.innerText = data.details.safetyMarkers;
     
-    return jsonify({"error": "Invalid credentials. Please try again."}), 401
+    // New Medicine Info section
+    if (data.medicineInfo) {
+        infoCompany.innerText = data.medicineInfo.companyName || 'Not Detected';
+        infoUsage.innerText = data.medicineInfo.usage || 'Not Detected';
+        infoStorage.innerText = data.medicineInfo.storageInstructions || 'Not Detected';
+    } else {
+        infoCompany.innerText = 'Analysis Failed';
+        infoUsage.innerText = 'Analysis Failed';
+        infoStorage.innerText = 'Analysis Failed';
+    }
 
-if __name__ == '__main__':
-    print("MedicineGuard AI backend running continuously on http://localhost:5001")
-    if not os.path.exists('public'):
-        os.makedirs('public')
-    app.run(host='0.0.0.0', port=5001, debug=False)
+    // Record to Session PDF Logger
+    recordSessionAction('Image Scan', 'Analyzed Medicine Image', data.riskLevel + ' Risk Level (' + data.score + '%)');
+
+    scanResults.style.display = 'block';
+}
+
+// === History Page Logic ===
+const historyGrid = document.getElementById('historyGrid');
+const historyLoader = document.getElementById('historyLoader');
+const noHistory = document.getElementById('noHistory');
+
+if (historyGrid) {
+    fetchHistory();
+}
+
+async function fetchHistory() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/history`);
+        const resData = await response.json();
+
+        historyLoader.style.display = 'none';
+
+        if (resData.success && resData.data.length > 0) {
+            renderHistory(resData.data);
+            historyGrid.style.display = 'grid';
+        } else {
+            noHistory.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error fetching history:', error);
+        historyLoader.style.display = 'none';
+        noHistory.style.display = 'block';
+    }
+}
+
+function renderHistory(records) {
+    historyGrid.innerHTML = '';
+    records.forEach(record => {
+        const dateObj = new Date(record.date);
+        const formattedDate = dateObj.toLocaleDateString() + ' at ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const score = record.result.score;
+        const riskLevel = record.result.riskLevel;
+        
+        const isAuthentic = riskLevel === 'Low';
+        const colorAccent = riskLevel === 'High' ? 'var(--primary)' : (riskLevel === 'Medium' ? '#f59e0b' : '#10b981');
+
+        const card = document.createElement('div');
+        card.className = 'history-card';
+        card.innerHTML = `
+            <div class="history-header">
+                <span>${record.filename}</span>
+                <span>
+                    ${formattedDate} 
+                    <button onclick="deleteScan('${record.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; margin-left: 10px;" title="Delete this result">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </span>
+            </div>
+            <div class="history-score" style="color: ${colorAccent};">
+                ${score}% <span class="badge badge-${riskLevel}">${riskLevel} Risk</span>
+            </div>
+            <div style="font-size: 0.9rem; color: var(--text-muted);">
+                <i class="fa-solid ${isAuthentic ? 'fa-circle-check text-green' : 'fa-triangle-exclamation text-red'}"></i>
+                ${isAuthentic ? 'Likely Authentic' : 'Suspicious Elements Detected'}
+            </div>
+        `;
+        historyGrid.appendChild(card);
+    });
+}
+
+// History Deletion Functions
+async function deleteScan(id) {
+    if (!confirm('Are you sure you want to delete this scan result?')) return;
+    try {
+        await fetch(`${API_BASE_URL}/api/history/${id}`, { method: 'DELETE' });
+        fetchHistory(); // Refresh the list
+    } catch (error) {
+        console.error('Error deleting scan:', error);
+        alert('Failed to delete the result.');
+    }
+}
+
+async function clearAllHistory() {
+    if (!confirm('Are you absolutely sure you want to clear your entire scan history? This cannot be undone.')) return;
+    try {
+        await fetch(`${API_BASE_URL}/api/history`, { method: 'DELETE' });
+        fetchHistory(); // Refresh the list
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        alert('Failed to clear history.');
+    }
+}
+
+// === Database Page Logic ===
+async function searchMedicine(e) {
+    e.preventDefault();
+    const input = document.getElementById('searchInput').value.trim();
+    if (!input) return;
+
+    // UI State: Loading
+    document.getElementById('dbStateEmpty').style.display = 'none';
+    document.getElementById('dbResults').style.display = 'none';
+    const loader = document.getElementById('dbLoader');
+    if (loader) loader.style.display = 'flex';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/database?q=${encodeURIComponent(input)}`);
+        const resData = await response.json();
+
+        if (loader) loader.style.display = 'none';
+
+        if (resData.success) {
+            document.getElementById('dbTitle').innerText = input.toUpperCase();
+            document.getElementById('dbCompany').innerText = resData.data.companyName || 'Not available';
+            document.getElementById('dbUses').innerText = resData.data.primaryUses || 'Not available';
+            document.getElementById('dbIngredients').innerText = resData.data.activeIngredients || 'Not available';
+            document.getElementById('dbSideEffects').innerText = resData.data.sideEffects || 'Not available';
+            document.getElementById('dbStorage').innerText = resData.data.storageInstructions || 'Not available';
+            
+            // Record to Session PDF Logger
+            recordSessionAction('Database Search', input, resData.data.companyName || 'Successfully Retrieved Info');
+
+            document.getElementById('dbResults').style.display = 'block';
+        } else {
+            alert(resData.error || 'Failed to retrieve medicine data.');
+            document.getElementById('dbStateEmpty').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Search Error:', error);
+        if (loader) loader.style.display = 'none';
+        alert('A server error occurred during database lookup.');
+        document.getElementById('dbStateEmpty').style.display = 'block';
+    }
+}
+
+// === Help Triage Page Logic ===
+async function analyzeSymptoms(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('symptomsInput').value.trim();
+    if (!input) return;
+
+    // UI Loading state
+    document.getElementById('helpResults').style.display = 'none';
+    const loader = document.getElementById('helpLoader');
+    if (loader) loader.style.display = 'flex';
+    
+    // Disable button to prevent double-calls
+    const btn = document.getElementById('analyzeBtn');
+    if (btn) btn.disabled = true;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/help?symptoms=${encodeURIComponent(input)}`);
+        const resData = await response.json();
+
+        if (loader) loader.style.display = 'none';
+        if (btn) btn.disabled = false;
+
+        if (resData.success) {
+            const data = resData.data;
+            
+            // Set Badge
+            const badge = document.getElementById('riskBadge');
+            badge.className = 'risk-badge';
+            badge.innerText = data.riskLevel + ' Risk';
+            
+            if (data.riskLevel === 'High') {
+                badge.classList.add('risk-high');
+                document.getElementById('urgentAlertBox').style.display = 'block';
+                document.getElementById('resultCard').style.borderColor = '#ef4444';
+            } else if (data.riskLevel === 'Medium') {
+                badge.classList.add('risk-medium');
+                document.getElementById('urgentAlertBox').style.display = 'none';
+                document.getElementById('resultCard').style.borderColor = '#eab308';
+            } else {
+                badge.classList.add('risk-low');
+                document.getElementById('urgentAlertBox').style.display = 'none';
+                document.getElementById('resultCard').style.borderColor = '#22c55e';
+            }
+
+            // Set Advice
+            document.getElementById('helpAdvice').innerText = data.advice || "No specific advice provided.";
+
+            // Render Suggested Medicines
+            const medContainer = document.getElementById('helpMedicinesContainer');
+            const medSection = document.getElementById('medicationSection');
+            medContainer.innerHTML = '';
+            
+            if (data.suggestedMedicines && data.suggestedMedicines.length > 0) {
+                medSection.style.display = 'block';
+                data.suggestedMedicines.forEach(med => {
+                    const tag = document.createElement('span');
+                    tag.className = 'medicine-tag';
+                    tag.innerText = med;
+                    medContainer.appendChild(tag);
+                });
+            } else {
+                medSection.style.display = 'none'; // High risk usually means 0 suggestions
+            }
+
+            // Record to Session PDF Logger
+            recordSessionAction('Symptom Triage', input, data.riskLevel + ' Risk Identified');
+
+            document.getElementById('helpResults').style.display = 'block';
+        } else {
+            alert(resData.error || 'Failed to analyze symptoms.');
+        }
+    } catch (error) {
+        console.error('Triage Error:', error);
+        if (loader) loader.style.display = 'none';
+        if (btn) btn.disabled = false;
+        alert('A server error occurred during symptom triage.');
+    }
+}
+
+// === Session PDF Report Engine ===
+function recordSessionAction(type, query, result) {
+    let sessionSearches = JSON.parse(sessionStorage.getItem('medicineGuardSessionReport')) || [];
+    sessionSearches.push({
+        time: new Date().toLocaleTimeString(),
+        type: type,
+        query: query,
+        result: result
+    });
+    sessionStorage.setItem('medicineGuardSessionReport', JSON.stringify(sessionSearches));
+}
+
+function generatePDFReport() {
+    let sessionSearches = JSON.parse(sessionStorage.getItem('medicineGuardSessionReport')) || [];
+    let printWindow = window.open('', '_blank');
+    
+    let htmlContent = `
+    <html>
+    <head>
+        <title>MedicineGuard AI - Session Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+            h1 { color: #1e293b; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+            th { background-color: #f8fafc; color: #0f172a; }
+            .timestamp { color: #64748b; font-size: 0.9em; }
+            .no-data { margin-top: 20px; font-style: italic; color: #64748b; }
+        </style>
+    </head>
+    <body>
+        <h1>MedicineGuard AI - Session Tracking Report</h1>
+        <p>Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+    `;
+
+    if (sessionSearches.length === 0) {
+        htmlContent += `<p class="no-data">No searches or scans were performed during this active session.</p>`;
+    } else {
+        htmlContent += `
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Action Type</th>
+                    <th>Input / Query</th>
+                    <th>AI Result / Insight</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+        sessionSearches.forEach(item => {
+            htmlContent += `
+                <tr>
+                    <td class="timestamp">${item.time}</td>
+                    <td><strong>${item.type}</strong></td>
+                    <td>${item.query}</td>
+                    <td>${item.result}</td>
+                </tr>
+            `;
+        });
+        htmlContent += `
+            </tbody>
+        </table>
+        `;
+    }
+
+    htmlContent += `
+    </body>
+    </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // Allow rendering before print trigger
+    setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+    }, 250);
+}
+
+
